@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Menu circulaire – pages plein écran (slide-in)</title>
+<style>
+  :root {
+    --diametre: 520px;
+    --rayon: 230px;
+    --diametre-noeud: 120px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: #2e2e2e;
+    color: #fff;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  }
+  a { color: inherit; text-decoration: none; }
+  /* ===== Menu circulaire ===== */
+  .circle-container {
+    position: relative;
+    width: var(--diametre);
+    height: var(--diametre);
+    margin: 100px auto;
+    list-style: none;
+    padding: 0;
+  }
+  .circle-container > li { position: absolute; top: 50%; left: 50%; }
+  .node{
+    display:flex; align-items:center; justify-content:center;
+    width:var(--diametre-noeud); height:var(--diametre-noeud);
+    transform: translate(-50%, -50%);
+    border-radius:50%; background:#9a2243; border:2px solid #000;
+    text-align:center; padding:10px; line-height:1.2; color:#fff;
+    box-shadow:0 0 12px rgba(255,255,255,.25);
+    transition: transform .35s ease, background .35s ease, box-shadow .35s ease;
+  }
+  .node:hover, .node:focus-visible{
+    background:#a82a4d;
+    transform: translate(-50%, -50%) scale(1.25);
+    animation: glowPulse 1.2s ease-in-out infinite;
+    outline: none;
+  }
+  @keyframes glowPulse{
+    0%{box-shadow:0 0 16px rgba(255,255,255,.45)}
+    50%{box-shadow:0 0 28px rgba(255,255,255,.85),0 0 60px rgba(255,255,255,.35)}
+    100%{box-shadow:0 0 16px rgba(255,255,255,.45)}
+  }
+  .circle-container > li:nth-child(1){ transform: rotate(  210deg) translate(var(--rayon)) rotate(  -210deg); }
+  .circle-container > li:nth-child(2){ transform: rotate( 330deg) translate(var(--rayon)) rotate(-330deg); }
+  .circle-container > li:nth-child(3){ transform: rotate( 90deg) translate(var(--rayon)) rotate(-90deg); }
+  /* ===== Pages plein écran (overlay) ===== */
+  .section {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;          /* occupe tout l’écran */
+    z-index: 100;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #2e2e2e;
+    color: #fff;
+    overflow: auto;      /* scroll si le contenu dépasse */
+    padding: 20px 40px 40px;
+    /* état fermé */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(8%);
+    transition: opacity .35s ease, transform .45s ease, visibility 0s linear .45s;
+  }
+  /* état ouvert */
+  .section:target {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition: opacity .35s ease, transform .45s ease, visibility 0s;
+  }
+  /* En-tête de page */
+  .section-header{
+    display:flex; gap:12px; align-items:center; justify-content:space-between;
+    position: sticky; top: 0; padding: 8px 0 14px;
+    background: linear-gradient(#2e2e2e, #2e2e2e 70%, transparent);
+  }
+  .section-title{
+    flex:1; text-align:center; margin:0;
+    background:#9a2243; border:3px solid #fff; border-radius:12px; padding:10px;
+    font-size:24px;
+  }
+  .close-btn{
+    flex:0 0 auto;
+    display:inline-block; padding:8px 12px; border-radius:10px;
+    background:#2e2e2e; border:1px solid #444;
+  }
+  .close-btn:hover{ background:#2e2e2e; }
+  /* Cartes */
+  .card-container{ display:flex; flex-wrap:wrap; gap:20px; justify-content:center; margin-top:10px; }
+  .card{
+    border: 1px solid #ccc;
+    background:#2e2e2e; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+
+  .cardjus{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#b4a7d6; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .cardvin{
+    border: 1px solid #ccc;
+    color: #000000;
+    background:#fce5cd; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .cardplatvégé{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#d9ead3; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .cardplatviande{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#f4cccc; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .cardplatexotique{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#d0e0e3; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .cardplatpoisson{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#cfe2f3; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .cardfruits{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#ead1dc; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .cardfromage{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#fff2cc; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .carddessert{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#ffc0ff; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+  .cardsaucisson{
+    color: #000000;
+    border: 1px solid #ccc;
+    background:#f4cccc; border-radius:8px; padding:16px;
+    width:calc(33% - 20px); min-width:260px;
+    box-shadow:0 2px 5px rgba(0,0,0,.15);
+    transition: transform .2s ease-in-out, box-shadow .2s ease-in-out;
+  }
+
+  .cardtitre{
+    color: #000000;
+    font-weight: bold;
+    text-align: center;
+  }
+
+    table {
+    --gap-x: 5px;             /* espace horizontal entre colonnes ET sur les bords */
+    --gap-y: 5px;              /* espace vertical entre lignes */
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: var(--gap-x) var(--gap-y);
+    table-layout: fixed;       /* fixe le calcul des largeurs */
+    }
+
+    table td {
+    /* 2 colonnes => 3 espacements horizontaux (gauche, milieu, droite) */
+    width: calc((100% - 3 * var(--gap-x)) / 2);
+    border: 1px none;
+    padding: 5px 5px;
+    text-align: left;
+    overflow-wrap: anywhere;    /* évite que du texte long casse tout */
+    }
+
+  .card:hover{ transform: scale(1.05); box-shadow:0 6px 15px rgba(255,255,255,.3); }
+  .card h3{ margin-top:0; color:#9a2243; }
+  .card p{ margin:4px 0; }
+  /* Sous-titres (details/summary) – pas de puce + pleine largeur */
+  details > summary{ list-style:none; cursor:pointer; }
+  details > summary::-webkit-details-marker{ display:none; }
+  details > summary::marker{ content:""; }
+  .soustitre{
+    display:block; width:100%; box-sizing:border-box;
+    text-align:center; color:#fff; background:#b74162;
+    margin:12px 0 20px 0; border:3px solid #fff; border-radius:12px;
+    font-weight:700; font-size:20px; padding:10px;
+  }
+  .img-center{ display:block; margin:14px auto; width:min(900px, 100%); }
+  @media (max-width: 720px){
+    :root{ --diametre: 380px; --rayon: 165px; --diametre-noeud: 100px; }
+    .section{ padding: 14px 16px 28px; }
+    .card{ width:100%; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .node{ transition: none; }
+    .node:hover{ animation: none; }
+    .section{ transition: none; transform: none; }
+  }
+
+  .calc {
+    background:#171717; border:1px solid #ffffff; border-radius:12px;
+    padding:16px; box-shadow:0 8px 20px rgba(138, 138, 138, 0.3);
+  }
+  .calc h3 { margin:14px 0 8px; color:#9a2243; }
+  .calc-form {
+    display:flex; flex-wrap:wrap; gap:12px; align-items:end; margin-bottom:12px;
+  }
+  .calc-form label { font-size:.9rem; color:#9a2243; display:block; }
+  .calc-form select, .calc-form input[type=number] {
+    background:#2a2a2a; color:#ffffff; border:1px solid #444; border-radius:8px;
+    padding:8px 10px; min-width:220px;
+  }
+  .calc-form input[type=number]{ width:120px; }
+  .calc-btn {
+    background:#9a2243; color:#fff; border:1px solid #000; border-radius:10px;
+    padding:9px 14px; cursor:pointer;
+  }
+  .calc-btn:hover { background:#a82a4d; }
+  .calc table { width:100%; border-collapse:collapse; margin-top:6px; }
+  .calc th, .calc td { border-bottom:1px solid #333; padding:8px 10px; text-align:left; }
+  .calc thead th { color:#ddd; background:#141414; position:sticky; top:0; }
+  .calc .right { text-align:right; }
+  .calc .muted { color:#aaa; }
+  .pill {
+    display:inline-flex; align-items:center; gap:8px; padding:5px 10px;
+    border-radius:999px; background:#2a2a2a; border:1px solid #444;
+  }
+  .link-btn {
+    background: #9a2243; color:#fff; border: 1px solid #555; border-radius:8px;
+    padding:4px 8px; cursor:pointer;
+  }
+  .link-btn:hover { background:#2a2a2a; }
+  .total-line {
+    display:flex; justify-content:flex-end; gap:12px; align-items:center;
+    margin-top:12px; font-size:1.1rem;
+  }
+  .total-amount {
+    background:#9a2243; border:2px solid #fff; border-radius:10px; padding:6px 12px; font-weight:700;
+  }
+</style>
+
+</head>
+
+<body>
+
+    <!-- ===== Menu circulaire ===== -->
+
+    <ul class="circle-container">
+        <li><a class="node" href="#recettes">Recettes</a></li>
+        <li><a class="node" href="#stocks">Stocks minimaux</a></li>
+        <li><a class="node" href="#plats">Calculatrice à plats</a></li>
+    </ul>
+
+  <!-- ===== Recettes ===== -->
+
+    <section id="recettes" class="section">
+        <div class="section-header">
+            <a href="#!" class="close-btn">✖ Fermer</a>
+            <h2 class="section-title">Recettes</h2>
+            <span style="width:150px;"></span>
+        </div>
+        <div class="card-container">
+            <div class="cardjus">
+                <h3 class="cardtitre">Petits Jus (PJ)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Jus de pomme (x10)</td>
+                            <td>2 pommes</td>
+                        </tr>
+                        <tr>
+                            <td>Choux Brouhaha (x10)</td>
+                            <td>1 chou</td>
+                        </tr>
+                        <tr>
+                            <td>Bouteille de limonade (x10)</td>
+                            <td>2 citrons</td>
+                        </tr>
+                        <tr>
+                            <td>Jus d'orange (x10)</td>
+                            <td>2 oranges</td>
+                        </tr>
+                        <tr>
+                            <td>Potage à la citrouille (x10)</td>
+                            <td>1 citrouille</td>
+                        </tr>
+                        <tr>
+                            <td>Jus de tomate (x10)</td>
+                            <td>2 tomates</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardjus">
+                <h3 class="cardtitre">Moyens Jus (MJ)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Naples Gius (x4)</td>
+                            <td>4 cardinal</td>
+                        </tr>
+                        <tr>
+                            <td>Juskano (x4)</td>
+                            <td>4 muscat</td>
+                        </tr>
+                        <tr>
+                            <td>Oasclick (x4)</td>
+                            <td>4 centennial</td>
+                        </tr>
+                        <tr>
+                            <td>TropiCamak (x4)</td>
+                            <td>4 chasselas</td>
+                        </tr>
+                        <tr>
+                            <td>Tomachou fraicheur (x10)</td>
+                            <td>1 chou & 1 tomate</td>
+                        </tr>
+                        <tr>
+                            <td>Orangeade à la citrouille (x10)</td>
+                            <td>2 oranges & 1 citrouille</td>
+                        <tr>
+                            <td>Smoothie fruité (x10)</td>
+                            <td>2 oranges & 2 pommes</td>
+                        </tr>
+                        <tr>
+                            <td>Tomato-Tonic (x10)</td>
+                            <td>2 pommes & 1 tomate</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardjus">
+                <h3 class="cardtitre">Grands Jus (GJ)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>FruitForSub (x4)</td>
+                            <td>2 cardinal & 2 muscat & 2 chasselas & 2 centennial</td>
+                        </tr>
+                        <tr>
+                            <td>Multifruit (x10)</td>
+                            <td>2 oranges & 2 pommes & 2 tomates & 1 citrouille</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardvin">
+                <h3 class="cardtitre">Vins (V)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Mandatorien (x1)</td>
+                            <td>10 cardinal</td>
+                        </tr>
+                        <tr>
+                            <td>Cuve Saint-Monnay (x1)</td>
+                            <td>10 muscat</td>
+                        </tr>
+                        <tr>
+                            <td>LaMano Blanc (x1)</td>
+                            <td>10 chasselas</td>
+                        </tr>
+                        <tr>
+                            <td>IndySpensable (x1)</td>
+                            <td>10 centennial</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatvégé">
+                <h3 class="cardtitre">Moyens plats végétariens (MP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Salade de choux (x10)</td>
+                            <td>1 chou</td>
+                        </tr>
+                        <tr>
+                            <td>Maïs à la crème (x10)</td>
+                            <td>2 maïs</td>
+                        </tr>
+                        <tr>
+                            <td>Pommes de terres sautées (x10)</td>
+                            <td>2 pommes de terre</td>
+                        </tr>
+                        <tr>
+                            <td>Tomate farcie (x10)</td>
+                            <td>2 tomates</td>
+                        </tr>
+                        <tr>
+                            <td>Danse végétarienne</td>
+                            <td>2 maïs & 2 pommes de terre</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatvégé">
+                <h3 class="cardtitre">Grands plats Végétariens (GP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Symphonie de l'automne (x10)</td>
+                            <td>2 oranges, 2 pommes, 1 maïs, 2 pommes de terre</td>
+                        </tr>
+                        <tr>
+                            <td>Festin champêtre (x10)</td>
+                            <td>2 maïs, 1 chou, 2 tomates, 1 citrouille</td>
+                        </tr>
+                        <tr>
+                            <td>Fête des légumes (x10)</td>
+                            <td>2 maïs, 2 pommes de terre, 2 tomates, 1 citrouille</td>
+                        </tr>
+                        <tr>
+                            <td>Réunion potagère (x10)</td>
+                            <td>2 maïs, 1 chou, 2 pommes de terre</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatviande">
+                <h3 class="cardtitre">Grands plats de viande (GP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Symphonie de boeuf à la truffe (x10)</td>
+                            <td>3 champignons, 1 langue, 1 abat, 1 rognon, 1 tripe, 1 mandatorien</td>
+                        </tr>
+                        <tr>
+                            <td>Côte d'agneau croquante (x10)</td>
+                            <td>5 maïs, 2 choux, 5 pommes de terre, 5 tomates, 2 viande, 1 lait entier</td>
+                        </tr>
+                        <tr>
+                            <td>Filet de veau rosmarino (x10)</td>
+                            <td>2 pommes de terre, 2 viandes, 1 lait entier</td>
+                        </tr>
+                        <tr>
+                            <td>Magret épicé sichuan (x10)</td>
+                            <td>2 pommes de terre, 2 viandes, 1 lait entier, 1 IndySpensable</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatexotique">
+                <h3 class="cardtitre">Grands plats exotiques (GP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Tataki du bout du monde (x10)</td>
+                            <td>1 citron, 2 pommes de terre, 2 viandes</td>
+                        </tr>
+                        <tr>
+                            <td>Tagine des sables (x10)</td>
+                            <td>1 orange, 1 citron, 5 maïs, 2 choux, 5 pommes de terre, 5 tomates, 2 viandes</td>
+                        </tr>
+                        <tr>
+                            <td>Tikka royale (x10)</td>
+                            <td>1 citron, 5 maïs, 2 choux, 5 pommes de terre, 5 tomates, 2 viandes, 1 lait entier</td>
+                        </tr>
+                        <tr>
+                            <td>Curry de chèvre tropical (x10)</td>
+                            <td>1 citron, 1 pomme de terre, 1 tomate, 2 viandes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatpoisson">
+                <h3 class="cardtitre">Grands plats de poisson (GP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Saint-Jacques au maïs doré (x10)</td>
+                            <td>4 bacs à poissons, 2 maïs, 1 lait entier, 1 lasbounou</td>
+                        </tr>
+                        <tr>
+                            <td>Turbot des profondeurs (x10)</td>
+                            <td>4 bacs à poissons, 1 citron, 1 pomme de terre, 1 tomate</td>
+                        </tr>
+                        <tr>
+                            <td>Cabillaud à l'herbier (x10)</td>
+                            <td>4 bacs à poissons, 5 maïs, 2 choux, 5 pommes de terre, 5 tomates, 1 LaMano Blanc</td>
+                        </tr>
+                        <tr>
+                            <td>Éveil de l'océan (x10)</td>
+                            <td>4 bacs à poissons, 1 pomme, 1 lait entier, 1 LaMano Blanc</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardfruits">
+                <h3 class="cardtitre">Fruits (PE)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Pomme</td>
+                            <td>Pomme</td>
+                        </tr>
+                        <tr>
+                            <td>Orange</td>
+                            <td>Orange</td>
+                        </tr>
+                        <tr>
+                            <td>Cardinal</td>
+                            <td>Cardinal</td>
+                        </tr>
+                        <tr>
+                            <td>Muscat</td>
+                            <td>Muscat</td>
+                        </tr>
+                        <tr>
+                            <td>Centennial</td>
+                            <td>Centennial</td>
+                        </tr>
+                        <tr>
+                            <td>Chasselas</td>
+                            <td>Chasselas</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardfromage">
+                <h3 class="cardtitre">Fromages (PE)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Poveridou (x3)</td>
+                            <td>1 lait écrèmé</td>
+                        </tr>
+                        <tr>
+                            <td>Caprice du tchat (x3)</td>
+                            <td>1 lait entier</td>
+                        </tr>
+                        <tr>
+                            <td>Zaroilles (x3)</td>
+                            <td>1 lait entier</td>
+                        </tr>
+                        <tr>
+                            <td>Moman-tum (x3)</td>
+                            <td>1 lait demi-écrèmé</td>
+                        </tr>
+                        <tr>
+                            <td>P'tit dashque (x3)</td>
+                            <td>1 lait demi-écrèmé</td>
+                        </tr>
+                        <tr>
+                            <td>Tchat qui rit (x3)</td>
+                            <td>1 lait demi-écrèmé</td>
+                        </tr>
+                        <tr>
+                            <td>Cutmembert (x3)</td>
+                            <td>1 lait entier</td>
+                        </tr>
+                        <tr>
+                            <td>CHEHdar (x3)</td>
+                            <td>1 lait écrèmé</td>
+                        </tr>
+                        <tr>
+                            <td>GorgonZera (x3)</td>
+                            <td>1 lait écrèmé</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="carddessert">
+                <h3 class="cardtitre">Desserts (GE)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Salade de fruits (x10)</td>
+                            <td>2 pommes, 2 oranges</td>
+                        </tr>
+                        <tr>
+                            <td>Cheesecake (x10)</td>
+                            <td>2 citrons, 2 laits entier</td>
+                        </tr>
+                        <tr>
+                            <td>Popcorn (x10)</td>
+                            <td>8 maïs</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardsaucisson">
+                <h3 class="cardtitre">Saucissons (GE)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Sans-pareil (x4)</td>
+                            <td>4 viandes, 4 langues, 4 abats, 4 rognons, 4 tripes</td>
+                        </tr>
+                        <tr>
+                            <td>Solong (x4)</td>
+                            <td>4 viandes, 4 langues, 4 abats, 4 rognons, 4 tripes</td>
+                        </tr>
+                        <tr>
+                            <td>Lasbounou (x4)</td>
+                            <td>4 viandes, 4 langues, 4 abats, 4 rognons, 4 tripes</td>
+                        </tr>
+                        <tr>
+                            <td>Soziflard (x4)</td>
+                            <td>4 viandes, 4 langues, 4 abats, 4 rognons, 4 tripes</td>
+                        </tr>
+                        <tr>
+                            <td>Saucifion (x4)</td>
+                            <td>4 viandes, 4 langues, 4 abats, 4 rognons, 4 tripes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Calculatrice de plats ===== -->
+
+    <section id="plats" class="section">
+        <div class="section-header">
+            <a href="#!" class="close-btn">✖ Fermer</a>
+            <h2 class="section-title">Préparer des plats</h2>
+            <span style="width:150px;"></span>
+        </div>
+        <div>
+            <div class="calc" id="recipe-calc">
+            <form class="calc-form" onsubmit="return false;">
+                <div>
+                <label for="catSelect">Catégorie</label>
+                <select id="catSelect"></select>
+                </div>
+                <div>
+                <label for="dishSelect">Plat</label>
+                <select id="dishSelect"></select>
+                </div>
+                <div>
+                <label for="dishQty">Quantité</label>
+                <input id="dishQty" type="number" min="1" step="1" value="1">
+                </div>
+                <button type="button" class="calc-btn" id="addLineBtn">Ajouter</button>
+                <button type="button" class="link-btn" id="clearAllBtn" title="Vider la sélection">Tout effacer</button>
+            </form>
+
+            <h3>Ma sélection</h3>
+            <table aria-label="Sélection de plats">
+                <thead>
+                <tr><th>Plat</th><th class="right">Quantité</th><th class="right">Coût (estim.)</th><th></th></tr>
+                </thead>
+                <tbody id="linesBody">
+                <tr class="muted"><td colspan="4">Aucun plat ajouté pour l’instant.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>Ingrédients nécessaires</h3>
+            <table aria-label="Récapitulatif ingrédients">
+                <thead>
+                <tr><th>Ingrédient</th><th class="right">Total requis</th><th class="right">Prix unitaire</th><th class="right">Sous-total</th></tr>
+                </thead>
+                <tbody id="summaryBody">
+                <tr class="muted"><td colspan="4">Ajoute des plats pour voir la liste d’ingrédients.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="total-line">
+                <span class="muted">Coût total estimé</span>
+                <span class="total-amount" id="grandTotal">0.00 $</span>
+            </div>
+            </div>
+            <script>
+            /* ==========
+            1) PARAMÈTRES — ÉDITE ICI TES PRIX ET RECETTES
+            ========== */
+            const INGREDIENT_PRICES = {
+            "Cardinal": 0.00,
+            "Muscat": 0.00,
+            "Chasselas": 0.00,
+            "Centennial": 0.00,
+            "Bac à poissons et crustacés": 0.00,
+            "Champignon": 0.00,
+            "Maïs": 15.00,
+            "Chou frais": 15.00,
+            "Pomme de terre": 15.00,
+            "Citrouille": 15.00,
+            "Tomate": 15.00,
+            "Orange": 15.00,
+            "Pomme": 15.00,
+            "Citron": 15.00,
+            "Langue": 0.00,
+            "Abat": 0.00,
+            "Rognon": 0.00,
+            "Tripe": 0.00,
+            "Viande": 0.00,
+            "Lait écrémé": 10.00,
+            "Lait demi-écrémé": 10.00,
+            "Lait entier": 10.00,
+            "LaMano Blanc": 0.00,
+            "Mandatorien": 0.00,
+            "IndySpensable": 0.00,
+            "Bière Zibwasser": 0.00,
+            "Lasbounou": 0.00
+            };
+
+            // Catégories -> Recettes (quantités par 1 plat)
+            const RECIPES_BY_CAT = {
+            "Petits jus": {
+                "Jus de pomme":   { "Pomme": 0.2 },
+                "Choux Brouhaha":   { "Chou frais": 0.1 },
+                "Bouteille de limonade":   { "Citron": 0.2 },
+                "Jus d'orange":   { "Orange": 0.2 },
+                "Potage à la citrouille":   { "Citrouille": 0.1 },
+                "Jus de tomate":   { "Tomate": 0.2 }
+            },
+            "Moyens jus": {
+                "Naples Gius":    { "Cardinal": 1 },
+                "Juskano":    { "Muscat": 1 },
+                "Oasclick":    { "Centennial": 1 },
+                "Tropicamak":    { "Chasselas": 1 },
+                "Tomachou fraicheur":    { "Chou frais": 0.1, "Tomate": 0.2 },
+                "Orangeade à la citrouille":    { "Orange": 0.2, "Citrouille": 0.1 },
+                "Smoothie fruité":    { "Orange": 0.2, "Pomme": 0.2 },
+                "Tomato-Tonic":  { "Pomme": 0.2, "Tomate": 0.1 }
+            },
+            "Grands jus": {
+                "FruitForSub":   { "Cardinal": 0.5, "Muscat": 0.5, "Centennial": 0.5, "Chasselas": 0.5 },
+                "Multifruit":    { "Orange": 0.2, "Pomme": 0.2, "Tomate": 0.2, "Citrouille": 0.1 }
+            },
+            "Vins": {
+                "Mandatorien":   { "Cardinal": 10 },
+                "Cuve Saint-Monnay":    { "Muscat": 10 },
+                "LaMano Blanc":    { "Centennial": 10 },
+                "IndySpensable":    { "Chasselas": 10 }
+            },
+            "Moyens plats": {
+                "Salade de choux":   { "Chou frais": 0.1 },
+                "Maïs à la crème":   { "Maïs": 0.2 },
+                "Pommes de terres sautées":   { "Pomme de terre": 0.2 },
+                "Tomate farcie":   { "Tomate": 0.2 },
+                "Danse végétarienne":   { "Maïs": 0.2, "Pomme de terre": 0.2 }
+            },
+            "Grands plats - Végétarien": {
+                "Symphonie de l'automne":   { "Orange": 0.2, "Pomme": 0.2, "Maïs": 0.1, "Pomme de terre": 0.2 },
+                "Festin champêtre":   { "Maïs": 0.2, "Chou frais": 0.1, "Tomate": 0.2, "Citrouille": 0.1 },
+                "Fête des légumes":   { "Maïs": 0.2, "Pomme de terre": 0.2, "Tomate": 0.2, "Citrouille": 0.1 },
+                "Réunion potagère":   { "Maïs": 0.2, "Chou frais": 0.1, "Pomme de terre": 0.2 }
+            },
+            "Grands plats - Viande": {
+                "Symphonie de boeuf à la truffe":   { "Champignon": 0.3, "Langue": 0.1, "Abat": 0.1, "Rognon": 0.1, "Tripe": 0.1, "Mandatorien": 0.1 },
+                "Côte d'agneau croquante":   { "Maïs": 0.5, "Chou frais": 0.2, "Pomme de terre": 0.5, "Tomate": 0.5, "Viande": 0.2, "Lait entier": 0.1 },
+                "Filet de veau rosmarino":   { "Pomme de terre": 0.2, "Viande": 0.2, "Lait entier": 0.1 },
+                "Magret épicé sichuan":   { "Pomme de terre": 0.2, "Viande": 0.2, "IndySpensable": 0.1 }
+            },
+            "Grands plats - Exotique": {
+                "Tataki du bout du monde":   { "Citron": 0.1, "Pomme de terre": 0.2, "Viande": 0.2 },
+                "Tagine des sables":   { "Orange": 0.1, "Citron": 0.1, "Maïs": 0.5, "Chou frais": 0.2, "Pomme de terre": 0.5, "Tomate": 0.5, "Viande": 0.2 },
+                "Tikka royale":   { "Citron": 0.1, "Maïs": 0.5, "Chou frais": 0.2, "Pomme de terre": 0.5, "Tomate": 0.5, "lait entier": 0.1, "Viande": 0.2 },
+                "Curry de chèvre tropical":   { "Citron": 0.1, "Pomme de terre": 0.1, "Tomate": 0.1, "Viande": 0.2 }
+            },
+            "Grands plats - Poisson": {
+                "Saint-Jacques au maïs doré":   { "Bac à poissons et crustacés": 0.4, "Maïs": 0.2, "Lait entier": 0.1, "Lasbounou": 0.1 },
+                "Turbot des profondeurs":   { "Bac à poissons et crustacés": 0.4, "Citron": 0.1, "Chou frais": 0.1, "Tomate": 0.1 },
+                "Cabillaud à l'herbier":   { "Bac à poissons et crustacés": 0.4, "Maïs": 0.5, "Chou frais": 0.2, "Pomme de terre": 0.5, "Tomate": 0.5, "LaMano Blanc": 0.1 },
+                "Éveil de l'océan":   { "Bac à poissons et crustacés": 0.4, "Pomme": 0.1, "Lait entier": 0.1, "LaMano Blanc": 0.1 }
+            },
+            "Petits extras": {
+                "Pomme":   { "Pomme": 1 },
+                "Orange":   { "Orange": 1 },
+                "Cardinal":   { "Cardinal": 1 },
+                "Muscat":   { "Muscat": 1 },
+                "Centennial":   { "Centennial": 1 },
+                "Chasselas":   { "Chasselas": 1 },
+                "Poveridou":   { "Lait écrémé": 0.33 },
+                "Caprice du tchat":   { "Lait entier": 0.33 },
+                "Zaroilles":   { "Lait demi-écrémé": 0.33 },
+                "Moman-tum":   { "Lait demi-écrémé": 0.33 },
+                "P'tit dashque":   { "Lait demi-écrémé": 0.33 },
+                "Tchat qui rit":   { "Lait entier": 0.33 },
+                "Cutmembert":   { "Lait entier": 0.33 },
+                "CHEHdar":   { "Lait écrémé": 0.33 },
+                "GorgonZera":   { "Lait écrémé": 0.33 }
+            },
+            "Grands extras": {
+                "Salade de fruits":   { "Pomme": 0.2, "Orange": 0.2 },
+                "Cheesecake":   { "Citron": 0.2, "Lait entier": 0.2 },
+                "Popcorn":   { "Maïs": 0.8 },
+                "Sans-pareil":   { "Viande": 1, "Langue": 1, "Abat": 1, "Rognon": 1, "Tripe": 1 },
+                "Solong":   { "Viande": 1, "Langue": 1, "Abat": 1, "Rognon": 1, "Tripe": 1 },
+                "Lasbounou":   { "Viande": 1, "Langue": 1, "Abat": 1, "Rognon": 1, "Tripe": 1 },
+                "Soziflard":   { "Viande": 1, "Langue": 1, "Abat": 1, "Rognon": 1, "Tripe": 1 },
+                "Saucifion":   { "Viande": 1, "Langue": 1, "Abat": 1, "Rognon": 1, "Tripe": 1 },
+            }
+            };
+
+            /* ==========
+            2) LOGIQUE
+            ========== */
+            const $ = (sel, root=document) => root.querySelector(sel);
+
+            const catSelect    = $('#catSelect');
+            const dishSelect   = $('#dishSelect');
+            const qtyInput     = $('#dishQty');
+            const addBtn       = $('#addLineBtn');
+            const clearBtn     = $('#clearAllBtn');
+            const linesBody    = $('#linesBody');
+            const summaryBody  = $('#summaryBody');
+            const grandTotalEl = $('#grandTotal');
+
+            // Construire une liste de catégories
+            const CATEGORIES = Object.keys(RECIPES_BY_CAT);
+
+            // Lookup rapide par clé "cat|||dish" -> recette
+            const RECIPE_LOOKUP = {};
+            for (const cat of CATEGORIES){
+            for (const dish of Object.keys(RECIPES_BY_CAT[cat])){
+                RECIPE_LOOKUP[`${cat}|||${dish}`] = RECIPES_BY_CAT[cat][dish];
+            }
+            }
+
+            // Remplit le select Catégories
+            function populateCategories(){
+            catSelect.innerHTML = '';
+            const optAll = document.createElement('option');
+            optAll.value = '__ALL__';
+            optAll.textContent = 'Toutes les catégories';
+            catSelect.appendChild(optAll);
+
+            for (const cat of CATEGORIES){
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                catSelect.appendChild(opt);
+            }
+            catSelect.value = '__ALL__';
+            }
+
+            // Remplit le select Plats selon la catégorie
+            function populateDishes(selectedCat='__ALL__'){
+            dishSelect.innerHTML = '';
+            if (selectedCat === '__ALL__'){
+                // Affiche par optgroup
+                for (const cat of CATEGORIES){
+                const og = document.createElement('optgroup');
+                og.label = cat;
+                for (const dish of Object.keys(RECIPES_BY_CAT[cat])){
+                    const opt = document.createElement('option');
+                    opt.value = `${cat}|||${dish}`;   // encode cat+dish
+                    opt.textContent = dish;
+                    og.appendChild(opt);
+                }
+                dishSelect.appendChild(og);
+                }
+                // sélectionner le 1er
+                const first = dishSelect.querySelector('option');
+                if (first) dishSelect.value = first.value;
+            } else {
+                // Plats d'une seule catégorie
+                for (const dish of Object.keys(RECIPES_BY_CAT[selectedCat])){
+                const opt = document.createElement('option');
+                opt.value = `${selectedCat}|||${dish}`;
+                opt.textContent = dish;
+                dishSelect.appendChild(opt);
+                }
+            }
+            }
+
+            // État des lignes [{cat, dish, key, qty}]
+            let lines = [];
+
+            function formatMoney(n){ return (n||0).toFixed(2) + ' $'; }
+            function emptyRow(tbody, text){
+            tbody.innerHTML = '';
+            const tr = document.createElement('tr');
+            tr.className = 'muted';
+            const td = document.createElement('td');
+            td.colSpan = 4;
+            td.textContent = text;
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            }
+
+            function estimateLineCost(line){
+            const recipe = RECIPE_LOOKUP[line.key];
+            if (!recipe) return 0;
+            let sum = 0;
+            for (const [ing, perOne] of Object.entries(recipe)){
+                const unit = INGREDIENT_PRICES[ing] ?? 0;
+                sum += perOne * line.qty * unit;
+            }
+            return sum;
+            }
+
+            function recompute(){
+            // Totaux ingrédients {ing: qty}
+            const totals = {};
+            for (const line of lines){
+                const recipe = RECIPE_LOOKUP[line.key];
+                if (!recipe) continue;
+                for (const [ing, perOne] of Object.entries(recipe)){
+                totals[ing] = (totals[ing] || 0) + perOne * line.qty;
+                }
+            }
+
+            // Table sélection
+            linesBody.innerHTML = '';
+            if (lines.length === 0){
+                emptyRow(linesBody, 'Aucun plat ajouté pour l’instant.');
+            } else {
+                lines.forEach((line, idx) => {
+                const tr = document.createElement('tr');
+                const estCost = estimateLineCost(line);
+                tr.innerHTML = `
+                    <td>${line.dish} <span class="cat-badge">${line.cat}</span></td>
+                    <td class="right">
+                    <span class="pill">
+                        <button type="button" class="link-btn" data-act="dec" data-idx="${idx}">−</button>
+                        <strong>${line.qty}</strong>
+                        <button type="button" class="link-btn" data-act="inc" data-idx="${idx}">+</button>
+                    </span>
+                    </td>
+                    <td class="right">${formatMoney(estCost)}</td>
+                    <td class="right"><button type="button" class="link-btn" data-act="del" data-idx="${idx}">Supprimer</button></td>
+                `;
+                linesBody.appendChild(tr);
+                });
+            }
+
+            // Table ingrédients
+            summaryBody.innerHTML = '';
+            let grandTotal = 0;
+            const ingNames = Object.keys(totals).sort();
+            if (ingNames.length === 0){
+                emptyRow(summaryBody, 'Ajoute des plats pour voir la liste d’ingrédients.');
+            } else {
+                for (const ing of ingNames){
+                const qty = totals[ing];
+                const unit = INGREDIENT_PRICES[ing] ?? 0;
+                const sub  = qty * unit;
+                grandTotal += sub;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${ing}</td>
+                    <td class="right">${qty.toFixed(2)}</td>
+                    <td class="right">${formatMoney(unit)}</td>
+                    <td class="right">${formatMoney(sub)}</td>
+                `;
+                summaryBody.appendChild(tr);
+                }
+            }
+            grandTotalEl.textContent = formatMoney(grandTotal);
+            }
+
+            // Délégation pour inc/dec/del
+            linesBody.addEventListener('click', (e)=>{
+            const btn = e.target.closest('button[data-act]');
+            if (!btn) return;
+            const act = btn.getAttribute('data-act');
+            const idx = +btn.getAttribute('data-idx');
+            if (Number.isNaN(idx) || !lines[idx]) return;
+
+            if (act === 'inc') lines[idx].qty++;
+            if (act === 'dec') lines[idx].qty = Math.max(1, lines[idx].qty - 1);
+            if (act === 'del') lines.splice(idx, 1);
+            recompute();
+            });
+
+            // Ajouter une ligne
+            addBtn.addEventListener('click', ()=>{
+            const key = dishSelect.value;              // "cat|||dish"
+            if (!key) return;
+            const [cat, dish] = key.split('|||');
+            const qty  = Math.max(1, parseInt(qtyInput.value, 10) || 1);
+
+            // Fusionne si même plat/catégorie
+            const found = lines.find(l => l.key === key);
+            if (found) found.qty += qty;
+            else lines.push({ key, cat, dish, qty });
+
+            qtyInput.value = 1;
+            recompute();
+            });
+
+            // Tout effacer
+            clearBtn.addEventListener('click', ()=>{
+            lines = [];
+            recompute();
+            });
+
+            // Filtrage catégorie
+            catSelect.addEventListener('change', ()=>{
+            populateDishes(catSelect.value);
+            });
+
+            // Init
+            populateCategories();
+            populateDishes('__ALL__');
+            recompute();
+            </script>
+        </div>
+    </section>
+
+    <!-- ===== Stocks minimaux ===== -->
+
+    <section id="stocks" class="section">
+        <div class="section-header">
+            <a href="#!" class="close-btn">✖ Fermer</a>
+            <h2 class="section-title">Stocks minimaux</h2>
+            <span style="width:150px;"></span>
+        </div>
+        <div class="card-container">
+            <div class="cardjus">
+                <h3 class="cardtitre">Petits Jus (PJ)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Jus de pomme</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Choux Brouhaha</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Bouteille de limonade</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Jus d'orange</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Potage à la citrouille</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Jus de tomate</td>
+                            <td>A la demande</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardjus">
+                <h3 class="cardtitre">Moyens Jus (MJ)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Naples Gius</td>
+                            <td>Selon approvisionnement</td>
+                        </tr>
+                        <tr>
+                            <td>Juskano</td>
+                            <td>Selon approvisionnement</td>
+                        </tr>
+                        <tr>
+                            <td>Oasclick</td>
+                            <td>Selon approvisionnement</td>
+                        </tr>
+                        <tr>
+                            <td>TropiCamak</td>
+                            <td>Selon approvisionnement</td>
+                        </tr>
+                        <tr>
+                            <td>Tomachou fraicheur</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Orangeade à la citrouille</td>
+                            <td>A la demande</td>
+                        <tr>
+                            <td>Smoothie fruité</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Tomato-Tonic</td>
+                            <td>A la demande</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardjus">
+                <h3 class="cardtitre">Grands Jus (GJ)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>FruitForSub</td>
+                            <td>Refaire 1'000 quand stocks inférieurs à 250</td>
+                        </tr>
+                        <tr>
+                            <td>Multifruit</td>
+                            <td>Refaire 2'000 quand stocks inférieurs à 500</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardvin">
+                <h3 class="cardtitre">Vins (V)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Mandatorien</td>
+                            <td>Maintenir entre 50 et 60 bouteilles</td>
+                        </tr>
+                        <tr>
+                            <td>Cuve Saint-Monnay</td>
+                            <td>Maintenir entre 50 et 60 bouteilles</td>
+                        </tr>
+                        <tr>
+                            <td>LaMano Blanc</td>
+                            <td>Maintenir entre 50 et 60 bouteilles</td>
+                        </tr>
+                        <tr>
+                            <td>IndySpensable</td>
+                            <td>Maintenir entre 50 et 60 bouteilles</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatvégé">
+                <h3 class="cardtitre">Moyens plats végétariens (MP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Salade de choux</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Maïs à la crème</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Pommes de terres sautées</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Tomate farcie</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Danse végétarienne</td>
+                            <td>A la demande</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatvégé">
+                <h3 class="cardtitre">Grands plats Végétariens (GP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Symphonie de l'automne</td>
+                            <td>Refaire 1'000 quand les stocks sont inférieurs à 300</td>
+                        </tr>
+                        <tr>
+                            <td>Festin champêtre</td>
+                            <td>Refaire 1'000 quand les stocks sont inférieurs à 300</td>
+                        </tr>
+                        <tr>
+                            <td>Fête des légumes</td>
+                            <td>Refaire 1'000 quand les stocks sont inférieurs à 300</td>
+                        </tr>
+                        <tr>
+                            <td>Réunion potagère</td>
+                            <td>Refaire 1'000 quand les stocks sont inférieurs à 300</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatviande">
+                <h3 class="cardtitre">Grands plats de viande (GP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Symphonie de boeuf à la truffe</td>
+                            <td>Refaire 1'000 quand les stocks sont inférieurs à 300</td>
+                        </tr>
+                        <tr>
+                            <td>Côte d'agneau croquante</td>
+                            <td>Refaire autant que possible quand les stocks sont inférieurs à 100</td>
+                        </tr>
+                        <tr>
+                            <td>Filet de veau rosmarino</td>
+                            <td>Refaire autant que possible quand les stocks sont inférieurs à 100</td>
+                        </tr>
+                        <tr>
+                            <td>Magret épicé sichuan</td>
+                            <td>Refaire autant que possible quand les stocks sont inférieurs à 100</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatexotique">
+                <h3 class="cardtitre">Grands plats exotiques (GP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Tataki du bout du monde</td>
+                            <td>Refaire autant que possible quand les stocks sont inférieurs à 100</td>
+                        </tr>
+                        <tr>
+                            <td>Tagine des sables</td>
+                            <td>Refaire autant que possible quand les stocks sont inférieurs à 100</td>
+                        </tr>
+                        <tr>
+                            <td>Tikka royale</td>
+                            <td>Refaire autant que possible quand les stocks sont inférieurs à 100</td>
+                        </tr>
+                        <tr>
+                            <td>Curry de chèvre tropical</td>
+                            <td>Refaire autant que possible quand les stocks sont inférieurs à 100</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardplatpoisson">
+                <h3 class="cardtitre">Grands plats de poisson (GP)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Saint-Jacques au maïs doré</td>
+                            <td>Refaire 800 quand les stocks sont inférieurs à 200</td>
+                        </tr>
+                        <tr>
+                            <td>Turbot des profondeurs</td>
+                            <td>Refaire 800 quand les stocks sont inférieurs à 200</td>
+                        </tr>
+                        <tr>
+                            <td>Cabillaud à l'herbier</td>
+                            <td>Refaire 800 quand les stocks sont inférieurs à 200</td>
+                        </tr>
+                        <tr>
+                            <td>Éveil de l'océan</td>
+                            <td>Refaire 800 quand les stocks sont inférieurs à 200</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardfruits">
+                <h3 class="cardtitre">Fruits (PE)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Pomme</td>
+                            <td>Maintenir environ 15 pièces</td>
+                        </tr>
+                        <tr>
+                            <td>Orange</td>
+                            <td>Maintenir environ 15 pièces</td>
+                        </tr>
+                        <tr>
+                            <td>Cardinal</td>
+                            <td>Maintenir minimum 50 grapes</td>
+                        </tr>
+                        <tr>
+                            <td>Muscat</td>
+                            <td>Maintenir minimum 50 grapes</td>
+                        </tr>
+                        <tr>
+                            <td>Centennial</td>
+                            <td>Maintenir minimum 50 grapes</td>
+                        </tr>
+                        <tr>
+                            <td>Chasselas</td>
+                            <td>Maintenir minimum 50 grapes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardfromage">
+                <h3 class="cardtitre">Fromages (PE)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Poveridou</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                        <tr>
+                            <td>Caprice du tchat</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                        <tr>
+                            <td>Zaroilles</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                        <tr>
+                            <td>Moman-tum</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                        <tr>
+                            <td>P'tit dashque</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                        <tr>
+                            <td>Tchat qui rit</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                        <tr>
+                            <td>Cutmembert</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                        <tr>
+                            <td>CHEHdar</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                        <tr>
+                            <td>GorgonZera</td>
+                            <td>Refaire 60 quand les stocks sont inférieurs à 15</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="carddessert">
+                <h3 class="cardtitre">Desserts (GE)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Salade de fruits</td>
+                            <td>Refaire 100 quand les stocks sont inférieurs à 50</td>
+                        </tr>
+                        <tr>
+                            <td>Cheesecake</td>
+                            <td>Refaire 100 quand les stocks sont inférieurs à 50</td>
+                        </tr>
+                        <tr>
+                            <td>Popcorn</td>
+                            <td>Refaire 100 quand les stocks sont inférieurs à 25</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="cardsaucisson">
+                <h3 class="cardtitre">Saucissons (GE)</h3>
+                <table>
+                    <tbody>
+                        <tr>
+                            <td>Sans-pareil</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Solong</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Lasbounou</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Soziflard</td>
+                            <td>A la demande</td>
+                        </tr>
+                        <tr>
+                            <td>Saucifion</td>
+                            <td>A la demande</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+</body>
+
+</html>
