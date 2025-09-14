@@ -295,6 +295,59 @@
     outline: 2px solid #9a2243;
     background: #333;
   }
+  .tooltip {
+    position: relative;
+    cursor: help;
+  }
+
+  .tooltip-content {
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #9a2243;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+    font-size: 13px;
+    white-space: normal;
+    /*min-width: 200px;*/
+    width: 300px;
+    max-height: 150px;
+    overflow-y: auto;
+  }
+
+  .tooltip:hover .tooltip-content {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .tooltip-content::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #9a2243 transparent transparent transparent;
+  }
+
+  .ingredient-line {
+    margin: 2px 0;
+    color: #ddd;
+  }
+
+  .ingredient-line strong {
+    color: #9a2243;
+  }
 </style>
 
 </head>
@@ -937,6 +990,21 @@
             tbody.appendChild(tr);
             }
 
+            function generateTooltipContent(recipe, qty) {
+            if (!recipe) return '';
+            
+            let content = '<div class="tooltip-content">';
+            content += `<div style="color: #9a2243; font-weight: bold; margin-bottom: 6px;">Pour ${qty} portion(s) :</div>`;
+            
+            for (const [ingredient, amountPerOne] of Object.entries(recipe)) {
+                const totalAmount = (amountPerOne * qty).toFixed(2);
+                content += `<div class="ingredient-line">• <strong>${totalAmount}</strong> ${ingredient}</div>`;
+            }
+            
+            content += '</div>';
+            return content;
+            }
+
             function estimateLineCost(line){
             const recipe = RECIPE_LOOKUP[line.key];
             if (!recipe) return 0;
@@ -968,7 +1036,13 @@
                 const tr = document.createElement('tr');
                 const estCost = estimateLineCost(line);
                 tr.innerHTML = `
-                    <td>${line.dish} <span class="cat-badge">${line.cat}</span></td>
+                    <td>
+                    <span class="tooltip">
+                        ${line.dish}
+                        ${generateTooltipContent(RECIPE_LOOKUP[line.key], line.qty)}
+                    </span>
+                    <span class="cat-badge">${line.cat}</span>
+                    </td>
                     <td class="right">
                     <span class="pill">
                         <button type="button" class="link-btn" data-act="dec" data-idx="${idx}">−</button>
